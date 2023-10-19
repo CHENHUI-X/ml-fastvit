@@ -234,6 +234,8 @@ class MobileOneBlock(nn.Module):
             # Pad scale branch kernel to match conv branch kernel size.
             pad = self.kernel_size // 2 # 在stem阶段, 中间就是 1  *  1 是定死的 , 所以填充值就是padding的一半
             kernel_scale = torch.nn.functional.pad(kernel_scale, [pad, pad, pad, pad])
+            # torch.nn.functional.pad(kernel_scale, [pad, pad, pad, pad])
+            # 就是对kernel 上下分别填充 pad 个 0 , 左右分别填充 pad 个 0
 
         # get weights and bias of skip branch
         kernel_identity = 0
@@ -282,7 +284,7 @@ class MobileOneBlock(nn.Module):
         else:
             # 只能是一个BN层, 那就是 skip - connect layer
             # 那怎么把一个普通的skip - connect layer 变成一个conv层呢
-            # 可以做到, kernel size 任意,只需要把正中心位置 设置为1 ,其余位置设置为0即可
+            # 可以做到, kernel size 任意,只需要把正中心位置 设置为1 ,其余位置设置为 0 即可
             # 比如 2个channel , 想通过卷积输出第一个channel的原数据,只需要把kernel的第一个channel是 中间为1 , 
             # 其余为0 , 而第二个channel直接全部置为0 ,这样用这个kernel做卷积, 输出的结果就是原来输入的第一个通道
             assert isinstance(branch, nn.BatchNorm2d)
@@ -314,7 +316,7 @@ class MobileOneBlock(nn.Module):
         # 新的权重W' = 旧的权重 W *  gama / sigma (or name std)
         # 最终相当于 Out C 个 (intput C , Kh , Kw) 的核 , 
         #  然后给每个核整体 乘 同一个系数 , 第 k 个核 , 系数就是 t 的第 k个值
-        # see : 
+        # see : https://1drv.ms/p/s!AkQ5gZVBSgaigfIQwBQfp0CyIJem1g?e=ShD8jt
         return kernel * t, beta - running_mean * gamma / std # 新的 bias' 
 
     def _conv_bn(self, kernel_size: int, padding: int) -> nn.Sequential:
